@@ -2,21 +2,66 @@
 
 ## Decision
 
-Canonical catalog is shared across all organizations.
+The canonical catalog is shared across all organizations.
 
-Organizations do not own products.
-They reference products and manage:
+Organizations do not own products.  
+They reference products and manage their availability, visibility, and inventory.
 
-- availability
-- visibility
-- inventory
+---
 
-## Implication
+## Structure
 
-- No duplication of product data
+### Canonical Layer (Global)
+
+- brands
+- breweries
+- product_master
+- product_variants
+
+This layer is the single source of truth.
+
+---
+
+### Organization Layer
+
+- merchant_products
+- listings / availability
+- pricing (future)
+- visibility (public / private)
+
+Organizations decide:
+- whether to sell a product
+- whether to expose it to others
+
+---
+
+### Inventory Layer
+
+Inventory is scoped by:
+
+(org_id, variant_id)
+
+Each organization tracks its own stock independently.
+
+---
+
+## Implications
+
+- No duplication of product data across organizations
 - Multiple organizations can sell the same product
-- Inventory is scoped by (org_id, variant_id)
+- Product identity is globally consistent
+- Inventory and pricing remain organization-specific
+
+---
 
 ## Non-goals
 
-- Organization-specific product copies
+- Organization-specific copies of products
+- Independent product catalogs per organization
+
+---
+
+## Summary
+
+Canonical catalog defines "what exists".  
+Organizations define "what they sell".
