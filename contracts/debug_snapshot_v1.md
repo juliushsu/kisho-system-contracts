@@ -83,7 +83,18 @@ Query:
 - DO NOT fallback to direct DB queries
 
 ---
+## ORG SCOPE RULE
 
+For admin-debug endpoints:
+
+- orgId MUST use `stores.id`
+- DO NOT use `merchant_orgs.org_id`
+- orgSlug may only be used when it equals `stores.store_code`
+
+If frontend sends merchant_orgs.org_id, resolver will return:
+`org_scope_required_or_not_found`
+
+---
 ## VERSION
 
 v1.0 (2026-04-09)
