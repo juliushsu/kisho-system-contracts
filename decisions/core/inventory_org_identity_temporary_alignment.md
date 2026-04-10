@@ -81,3 +81,98 @@ Current staging environment has the following characteristics:
 - Smoke-testable data paths are built on top of `stores`
 
 To achieve a **minimal working inventory chain**:
+supplier → receipt → receipt_line → batch → position → movement
+Using `stores.id` as `org_id` allows:
+
+- Direct FK compatibility with existing tables
+- No need for additional mapping layer
+- Immediate staging verification (verify + smoke)
+
+---
+
+## What This Does NOT Mean
+
+This decision does NOT imply:
+
+- `store = organization`
+- `stores.id` is the canonical org identity
+- inventory model is finalized
+
+---
+
+## Intended Final Model
+
+The long-term architecture should distinguish:
+
+### Organization Layer
+- `merchant_orgs.org_id`
+- Represents the business entity (酒商 / 代理商)
+
+### Store / Branch Layer
+- `stores.id`
+- Represents physical locations / outlets / sites
+
+---
+
+## Expected Future Alignment
+
+Inventory tables should eventually follow:
+
+- `org_id -> merchant_orgs.org_id`
+- `branch_id / store_id -> stores.id`
+- `location_id` for warehouse / storage
+- `machine_id` for device-level placement
+
+---
+
+## Consequences
+
+### Positive
+- Enables A6-1 to be delivered without breaking staging
+- Allows immediate validation of inventory chain
+- Keeps migration scope minimal
+
+### Trade-offs
+- Semantic mismatch between `org_id` and true org identity
+- Requires future migration to normalize identity
+
+---
+
+## Migration Plan (Future Work)
+
+Planned in A6-1.1 or A6-2+:
+
+1. Introduce explicit mapping:
+   - `stores.org_id -> merchant_orgs.org_id`
+
+2. Add new column:
+   - `inventory_*`.`org_id` → reference `merchant_orgs.org_id`
+
+3. Backfill:
+   - Map existing `stores.id` to corresponding `merchant_orgs.org_id`
+
+4. Deprecate:
+   - Remove `org_id -> stores.id` FK
+
+5. Validate:
+   - Ensure no cross-org leakage
+   - Ensure all queries use new org identity
+
+---
+
+## Decision Summary
+
+| Item | Status |
+|------|--------|
+| A6-1 org_id → stores.id | Temporary |
+| Final org identity | merchant_orgs.org_id |
+| Requires migration | Yes |
+
+---
+
+## Next Step
+
+Proceed to:
+- A6-2: Movement semantics + query model
+- Then A6-1.1: org identity normalization
+
