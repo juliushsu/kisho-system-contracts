@@ -53,3 +53,31 @@ Planned future work:
 - A6-1.1 org identity correction proposal
 - compatibility migration from `stores.id` to `merchant_orgs.org_id`
 - explicit branch/store modeling
+
+# Inventory Org Identity Temporary Alignment
+
+## Status
+Temporary alignment for staging compatibility (A6-1).
+
+---
+
+## Decision
+
+In A6-1 (Inventory Batch Layer Foundation), all inventory tables use:
+
+- `org_id -> stores.id`
+
+This is a **staging-first compatibility decision**, not the final domain model.
+
+---
+
+## Context
+
+Current staging environment has the following characteristics:
+
+- Existing inventory-related tables are scoped around `stores`
+- `locations`, `devices`, and legacy inventory flows are linked to `stores`
+- Debug / admin tooling resolves org context via `stores.id`
+- Smoke-testable data paths are built on top of `stores`
+
+To achieve a **minimal working inventory chain**:
