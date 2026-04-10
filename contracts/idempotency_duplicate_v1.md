@@ -135,3 +135,6 @@ Import Review should surface duplicate risk as:
 - no duplicate detected
 
 This status is advisory for reviewers and must not silently auto-create new canonical entities when exact duplicate is detected.
+
+v1 only enforces exact duplicate blocking.
+Probable duplicate detection and barcode conflict escalation are deferred to A5-2.
