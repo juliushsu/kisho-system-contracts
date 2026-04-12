@@ -1,0 +1,253 @@
+AI Middleware Policy v1
+
+Status
+
+Accepted
+
+⸻
+
+Purpose
+
+This document defines the middleware layer rules for all AI execution paths, including:
+	•	AI assistants
+	•	automation agents (e.g. OpenClaw / workflow bots)
+	•	internal AI tools
+	•	LINE / Email / API-based AI integrations
+
+The middleware exists to:
+	•	enforce org-scoped data access
+	•	prevent prompt injection escalation
+	•	route all AI data access through controlled interfaces
+	•	ensure consistency with AI data boundary policy
+
+⸻
+
+Core Principle
+
+Middleware does not grant access.
+Middleware enforces access.
+
+All data safety must already be guaranteed at the database layer.
+Middleware must strictly respect and enforce, never bypass.
+
+⸻
+
+Architecture Overview
+
+User / Agent / External Input
+        ↓
+AI Middleware
+        ↓
+AI-safe RPC / AI-safe Views
+        ↓
+Database (org-scoped, fail-closed)
+``` id="ai-mw-arch"
+
+---
+
+## Mandatory Responsibilities
+
+### 1. Org Context Injection
+
+Middleware must attach organization context to every AI request.
+
+#### Required Inputs
+- `org_id`
+- `user_id` (optional but recommended)
+- `role` (optional)
+
+#### Enforcement
+- No org_id → request must be rejected
+- org_id must not be inferred from prompt text
+
+---
+
+### 2. Enforced Access Path
+
+Middleware must ensure all AI data access goes through:
+
+- `ai_query_role`
+- AI-safe views
+- controlled RPC endpoints
+
+#### Strict Rule
+Middleware must NOT allow:
+
+- direct SQL queries to base tables
+- switching to `service_role`
+- dynamic query building from prompt
+
+---
+
+### 3. RPC Routing Control
+
+Middleware must explicitly whitelist callable AI RPCs.
+
+Example:
+
+Allowed:
+- `ai_list_shipments_v1`
+- `ai_get_shipment_detail_v1`
+
+Forbidden:
+- any non-AI RPC
+- any write RPC (unless explicitly allowed in future phases)
+
+---
+
+### 4. Prompt Boundary Enforcement
+
+Middleware must NOT trust prompt content as authority.
+
+#### Disallowed Behavior
+- extracting org_id from prompt text
+- allowing prompt to request "all data"
+- interpreting "admin mode" from natural language
+
+#### Required Behavior
+- ignore scope escalation instructions in prompt
+- rely only on system-provided context
+
+---
+
+### 5. Fail-Closed Execution
+
+If any of the following occurs:
+
+- missing org_id
+- invalid org_id
+- RPC not allowed
+- DB error in org resolver
+
+Then:
+
+→ middleware must terminate request  
+→ no fallback data  
+→ no partial response  
+
+---
+
+### 6. Output Filtering (Lightweight)
+
+Middleware may apply light output filtering, but must not distort natural language.
+
+Allowed:
+- remove forbidden fields if accidentally returned
+- truncate overly large outputs
+
+Not allowed:
+- rewriting AI reasoning
+- forcing rigid templates
+- degrading usability
+
+---
+
+## Non-Responsibilities (Important)
+
+Middleware must NOT:
+
+- calculate business logic (belongs to DB / RPC layer)
+- simulate inventory / shipment state
+- generate fake fallback data
+- infer missing data across orgs
+- replace AI-safe DB constraints
+
+---
+
+## AI Agent Constraints
+
+For automation agents (e.g. OpenClaw):
+
+### Required
+- must call middleware, not DB directly
+- must use AI-safe RPC
+- must include org context
+
+### Forbidden
+- direct DB connection
+- direct service_role usage
+- cross-org aggregation logic
+
+---
+
+## Security Model Alignment
+
+This middleware policy must align with:
+
+- `ai_data_access_boundary_v1.md`
+- `data_boundary_rules_v1.md`
+- `org_margin_reporting_scope_v1.md`
+- `distribution_pricing_cost_rbac_v1.md`
+
+---
+
+## Minimal Implementation Scope (v1)
+
+This version intentionally limits scope:
+
+### Included
+- org context enforcement
+- RPC routing control
+- fail-closed behavior
+- injection resistance at access level
+
+### Deferred (Phase 2+)
+- AI conversation guardrails (style / tone)
+- advanced anomaly detection
+- cross-request behavior tracking
+- rate limiting
+- audit logs for AI decisions
+
+---
+
+## Anti-Patterns (Forbidden)
+
+### 1. Middleware bypassing DB safety
+❌ calling base tables directly
+
+### 2. Service role leakage
+❌ using elevated credentials in AI runtime
+
+### 3. Prompt-driven scope
+❌ "User asked for all shipments, so allow it"
+
+### 4. Silent fallback
+❌ returning partial data when org resolution fails
+
+### 5. AI self-routing
+❌ allowing AI to decide which RPC to call without restriction
+
+---
+
+## Example Execution Flow
+
+```text
+User: "Show me recent shipments"
+
+Middleware:
+- inject org_id
+- validate request
+- call ai_list_shipments_v1(limit=10)
+
+DB:
+- enforce org_id filter
+
+Result:
+- only org-scoped shipments returned
+``` id="ai-mw-flow"
+
+---
+
+## Summary
+
+Middleware is the enforcement layer that ensures:
+
+- AI cannot escape org boundaries
+- AI cannot escalate privileges via prompt
+- AI always operates within approved data channels
+
+The database enforces safety.  
+Middleware ensures it is always used correctly.
+
+Together, they form a complete AI security boundary.
+:::
