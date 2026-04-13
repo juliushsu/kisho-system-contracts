@@ -309,6 +309,12 @@ Bot 不可做：
 - 會計 / 業務需有人工確認入口
 - bot / reminder 必須遵守 reconciliation boundary
 
+ ### order_source_type（建議）
+- manual_quote
+- line_conversation
+- facebook_message
+- internal_created
+
 ---
 
 ## Summary
