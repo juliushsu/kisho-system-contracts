@@ -47,6 +47,15 @@ Accepted
 - 匯款誤認為已完成
 - bot 催款 / 提醒邏輯錯亂
 
+## Payment Lifecycle
+
+payment record 生命週期：
+
+- created
+- pending_verification（若為匯款）
+- confirmed / paid_auto
+- allocated
+- archived / settled
 ---
 
 ## Decision
@@ -218,6 +227,8 @@ Accepted
 
 ## Shipment / Fulfillment Rule
 
+預設規則（default policy）：
+- 未完成 allocation → 不得出貨
 出貨 readiness 不得僅由 order_status 判定。
 
 至少應考慮：
