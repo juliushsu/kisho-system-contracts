@@ -8,6 +8,8 @@ KISSHO AI system contracts (Codex / Readdy / CTO coordination)
 - [Readdy VER291 Backoffice Shell Review](docs/platform/READDY_VER291_BACKOFFICE_SHELL_REVIEW.md)
 - [Readdy VER292 Baseline Acceptance](docs/platform/READDY_VER292_BASELINE_ACCEPTANCE.md)
 - [Project Command Center Metadata Contract](docs/platform/PROJECT_COMMAND_CENTER_METADATA_CONTRACT.md)
+- [Project Governance Metadata Bridge](docs/platform/PROJECT_GOVERNANCE_METADATA_BRIDGE.md)
+- [Project Metadata Registry](projects/README.md)
 - [Meat Admin Architecture Placeholder](docs/meat/MEAT_ADMIN_ARCHITECTURE_PLACEHOLDER.md)
 
 ## Security Rule
