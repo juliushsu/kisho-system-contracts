@@ -114,7 +114,133 @@ B2B 採購模組負責：
 3. 有獨立角色與權限。
 4. 不再只是 B2B 採購平台中的商品分類。
 
-## 8. AI Agent 邊界
+## 8. Procurement Domain Boundary Review
+
+本節補充 Procurement Canonical Contracts Phase 的 domain review。它只定義邊界，不授權 DB migration、production logic、Readdy implementation、API route generation 或 Edge Function implementation。
+
+### 8.1 Procurement vs Sake Admin Boundaries
+
+| Topic | Procurement owns | Sake Admin owns |
+| --- | --- | --- |
+| Customer B2B buying flow | `/b2b` inquiry, quote, order draft, customer procurement list | Sake-specific merchant CRM and sake operational customer views |
+| Product catalog | Cross-category procurement catalog and customer-visible procurement assortment | Sake-specific wine/liquor product operations and machine product configuration |
+| Pricing | Customer price rules, price books, quote pricing, margin guardrails | Sake operational price display only when sourced from approved procurement/catalog contracts |
+| Orders | Procurement-originated B2B order drafts and confirmed orders | Sake merchant/order workflows that remain specific to sake operations |
+| Inventory | Allocation request and fulfillment need signal | Sake stock, batches, machine-backed positions, sake inventory movements |
+| AI | Cross-entry draft/search/recommendation orchestration | Sake-specific summaries within approved AI-safe data scope |
+
+Rules:
+
+1. Procurement may reference sake products and variants, but should not mutate sake inventory directly.
+2. Sake Admin may display procurement-derived quote/order references only through approved contracts.
+3. Sake-specific operational workflows must not bypass procurement pricing guardrails when used for B2B customer quotes.
+4. `/sake-admin` should not become the owner of `/b2b` customer account hierarchy.
+
+### 8.2 Procurement vs Meat Admin Boundaries
+
+| Topic | Procurement owns | Meat Admin owns |
+| --- | --- | --- |
+| Customer request | B2B inquiry, quote draft, customer confirmation | Meat-specific production, aging, food-safety context |
+| Product sellability | Customer-visible meat products and procurement offers | Meat batch, cut, grade, aging profile, traceability, safety |
+| Pricing | Quote price, customer-specific price, volatility review | Batch/grade/weight inputs that influence cost and availability |
+| Supplier/sourcing | External supplier quote and procurement-required workflow | Meat producer/factory operational source data where applicable |
+| Inventory/fulfillment signal | Demand and allocation request | Meat batch readiness and food-safety eligibility |
+| AI | Drafts and recommendation with guardrails | Meat-specific analysis only through approved safe context |
+
+Rules:
+
+1. Procurement may sell aged meat only when Meat Admin or approved meat catalog data marks it available.
+2. Meat Admin owns food-safety and traceability truth; Procurement must not override it.
+3. Aged meat pricing volatility requires category owner or procurement review when weight, grade, batch, or aging status changes materially.
+4. Customer-facing meat offers must not reveal internal yield loss, supplier cost, or margin.
+
+### 8.3 Shared Inventory Strategy
+
+Procurement is a demand and commitment layer; inventory remains a physical truth layer.
+
+| Capability | Owner | Rule |
+| --- | --- | --- |
+| Demand signal | Procurement | Quote/order drafts may express desired quantity |
+| Inventory truth | Sake/Meat/Inventory domain | Physical stock, batches, positions, and movements stay with inventory owner |
+| Allocation suggestion | AI / Procurement | AI may suggest; no automatic reservation/deduction |
+| Reservation/allocation | Inventory or fulfillment policy | Requires approved system/human workflow |
+| Deduction/movement | Inventory domain | Procurement and AI do not directly mutate inventory |
+
+Future shared inventory must preserve:
+
+1. Order, shipment, and inventory separation.
+2. Batch/position truth in inventory domain.
+3. Procurement order items as demand, not physical stock changes.
+4. Audit from order to allocation to shipment.
+
+### 8.4 Supplier Ownership Boundaries
+
+Supplier ownership depends on supplier role.
+
+| Supplier type | Owner | Notes |
+| --- | --- | --- |
+| Cross-category sourcing supplier | Procurement | Used for B2B sourcing, supplier quotes, lead time |
+| Sake importer/distributor | Procurement + Sake steward | Cost/availability may feed quotes; sake-specific data remains governed |
+| Meat producer/factory | Meat + Procurement | Meat safety/traceability stays with Meat; quote/cost workflow stays with Procurement |
+| Tableware supplier | Procurement | Tableware remains procurement category until upgraded |
+
+Rules:
+
+1. Supplier costs are internal-only.
+2. Supplier quotes may inform customer quotes but are not customer-facing records.
+3. AI may summarize supplier risk internally, but cannot commit supplier procurement.
+4. Supplier ownership must be explicit before implementation because it affects cost visibility and approval.
+
+### 8.5 Pricing Ownership Boundaries
+
+Pricing is governed by Procurement / Finance / Sales Ops, not by individual product admin screens.
+
+| Pricing object | Owner | Boundary |
+| --- | --- | --- |
+| Market reference pricing | Procurement / Finance | Internal sanity check, not automatic quote |
+| Price books | Procurement / Finance | Approved pricing layer |
+| Customer price rules | Procurement / Sales Ops | Customer-specific and auditable |
+| Supplier costs | Procurement | Internal-only |
+| Margin thresholds | Finance / Procurement | Internal-only guardrails |
+| Quote price | Sales + Procurement | Customer-facing only after approval rules |
+
+Rules:
+
+1. Sake Admin and Meat Admin should not independently create customer-specific B2B pricing.
+2. AI cannot approve pricing or activate customer price rules.
+3. High-risk pricing actions require human approval.
+4. Expired quotes cannot be silently converted to orders.
+
+### 8.6 AI Orchestration Boundaries
+
+AI orchestration coordinates context, drafts, and recommendations across LINE, Procurement, Sales, Customer, and Order.
+
+AI may:
+
+1. Receive inquiry context.
+2. Search product candidates.
+3. Create quote/order drafts.
+4. Flag pricing, supplier, identity, or inventory risk.
+5. Recommend follow-up.
+
+AI must not:
+
+1. Confirm orders.
+2. Approve or activate pricing.
+3. Commit supplier procurement.
+4. Allocate or deduct inventory.
+5. Send sensitive margin/cost data to customers.
+6. Use one customer's private context for another customer.
+
+Canonical orchestration references:
+
+| Topic | Source of truth |
+| --- | --- |
+| Customer context | `docs/platform/CUSTOMER_CONTEXT_GOVERNANCE.md` |
+| AI commerce events | `docs/procurement/AI_COMMERCE_EVENT_CONTRACT.md` |
+| Pricing guardrails | `docs/procurement/PRICING_GOVERNANCE_CONTRACT.md` |
+
+## 9. AI Agent 邊界
 
 AI Agent 負責：
 
@@ -133,7 +259,7 @@ AI Agent 不負責：
 5. 跨 org 或跨客戶推論。
 6. 讀取 secrets 或 `.env`。
 
-## 9. LINE Bot 邊界
+## 10. LINE Bot 邊界
 
 LINE Bot 負責：
 
@@ -150,7 +276,7 @@ LINE Bot 不負責：
 4. 自動扣庫存或安排出貨。
 5. 顯示或轉送 secrets。
 
-## 10. Shared Source Of Truth 建議
+## 11. Shared Source Of Truth 建議
 
 | 主題 | Source of truth |
 | --- | --- |
@@ -158,12 +284,17 @@ LINE Bot 不負責：
 | 後台 route namespace | `docs/platform/BACKOFFICE_ENTRYPOINT_GOVERNANCE.md` |
 | 模組邊界 | `docs/platform/DOMAIN_MODULE_BOUNDARY.md` |
 | B2B 採購 roadmap | `docs/procurement/PROCUREMENT_PLATFORM_ROADMAP.md` |
+| Procurement canonical data | `docs/procurement/PROCUREMENT_CANONICAL_DATA_CONTRACT.md` |
+| Customer context | `docs/platform/CUSTOMER_CONTEXT_GOVERNANCE.md` |
+| AI commerce events | `docs/procurement/AI_COMMERCE_EVENT_CONTRACT.md` |
+| Pricing governance | `docs/procurement/PRICING_GOVERNANCE_CONTRACT.md` |
 | AI LINE Bot 商務流程 | `docs/procurement/AI_LINE_BOT_COMMERCE_FLOW.md` |
+| Procurement implementation phases | `docs/governance/PROCUREMENT_IMPLEMENTATION_PHASE_PLAN.md` |
 | GitHub branch/docs 清理 | `docs/governance/GITHUB_BRANCH_AND_DOCS_CLEANUP_PLAN.md` |
 | AI Agent 上位原則 | `decisions/core/ai_agent_operating_model_v1.md` |
 | 多租戶與酒商平台核心原則 | `decisions/core/platform_operating_model_v1.md` |
 
-## 11. Implementation Gate
+## 12. Implementation Gate
 
 任何跨模組實作前需確認：
 
