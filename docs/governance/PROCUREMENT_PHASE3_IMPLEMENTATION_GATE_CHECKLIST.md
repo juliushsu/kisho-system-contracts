@@ -10,6 +10,8 @@ Scope: CTO review checklist before migration / API implementation
 
 Phase 3B-1 update: CTO accepted the Phase 3A must-fix direction and allowed preparation of a staging-only schema skeleton migration file. This approval does not authorize running the migration, production deployment, API route work, Readdy UI work, LINE integration, AI pricing automation, order confirmation, or inventory mutation.
 
+Phase 3B-2 update: first execution path is disposable Supabase dry-run only. Shared staging remains forbidden until disposable dry-run evidence is reviewed and CTO opens a separate gate.
+
 ## 1. CTO Review Requirement
 
 Phase 3B+ must not begin until CTO reviews and accepts this checklist.
@@ -108,15 +110,44 @@ Phase 3B-1 conservative RLS decision:
 5. Audit table has no authenticated read policy in Phase 3B-1.
 6. Owner/admin broad access remains TODO until the canonical role source is confirmed.
 
+## 4.2 Phase 3B-2 Disposable Dry-Run Gate
+
+Phase 3B-2 allowed scope:
+
+1. Create disposable Supabase dry-run SOP.
+2. Define execution, rollback, verification, and failure recovery checklists.
+3. Require disposable project for first execution.
+4. Require fictional seed and RLS denial tests only after explicit execution approval.
+5. Preserve production, shared staging, API, LINE, AI pricing, Readdy UI, order, inventory, secrets/env prohibitions.
+
+Phase 3B-2 required exclusions:
+
+1. Do not execute migration.
+2. Do not execute seed.
+3. Do not execute tests.
+4. Do not use production.
+5. Do not use shared staging.
+6. Do not connect API routes, Edge Functions, LINE, AI pricing, or Readdy UI.
+7. Do not create formal orders, inventory mutation, real customer data, or real pricing data.
+
+Phase 3B-2 pass criteria before any next gate:
+
+1. Disposable dry-run sequence is reviewed.
+2. Rollback sequence is reviewed.
+3. Validation checklist includes RLS denial and audit isolation.
+4. Failure recovery path blocks shared staging on any leak or partial rollback failure.
+5. CTO approves whether to run disposable dry-run in a future execution round.
+
 ## 5. Phase 3C Entry Criteria
 
 Phase 3C read model APIs may start only if:
 
-1. Staging migration is applied and verified.
+1. Disposable dry-run is applied, verified, rolled back, and reviewed.
 2. RLS denial tests pass.
 3. Read DTOs match `PROCUREMENT_API_READ_MODEL_CONTRACT.md`.
 4. Pricing and supplier cost fields are hidden from unauthorized actors.
-5. Readdy can use staging read models without write permissions.
+5. CTO approves moving from dry-run to read model API planning.
+6. Shared staging remains blocked until a separate gate is opened.
 
 ## 6. Phase 3D Entry Criteria
 

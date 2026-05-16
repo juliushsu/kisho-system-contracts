@@ -6,6 +6,8 @@ Scope: Dry-run / rollback / fictional seed / RLS denial test package only
 
 本輪不執行 migration、不執行 seed、不執行 tests、不碰 production、不接 API / LINE / AI / Readdy UI、不碰 secrets / env。
 
+Phase 3B-2 update: the next dry-run SOP requires a disposable Supabase project only. Shared staging is not allowed for the first execution path.
+
 ## 1. Dry-Run Purpose
 
 The Phase 3B-1 dry-run package prepares a controlled review path for:
@@ -31,8 +33,8 @@ The package does not authorize production migration or implementation work beyon
 
 Before any execution is allowed:
 
-1. CTO explicitly approves disposable or staging dry-run.
-2. Target environment is confirmed as disposable or staging, not production.
+1. CTO explicitly approves disposable dry-run.
+2. Target environment is confirmed as disposable, not shared staging and not production.
 3. No production credentials, secrets, env values, or tokens are written to GitHub.
 4. `anon`, `authenticated`, and Supabase `auth.uid()` behavior are available.
 5. Rollback SQL is reviewed before the forward migration is run.
@@ -44,22 +46,22 @@ Before any execution is allowed:
 Recommended first execution target:
 
 ```text
-Disposable Supabase-compatible local database or disposable staging clone
+Disposable Supabase project only
 ```
 
-Do not start with production. Do not start with the primary staging database if rollback has not been reviewed.
+Do not start with production. Do not start with shared staging. Do not start with any environment connected to real users, Readdy, LINE, AI, Edge Functions, or production API routes.
 
-## 5. Staging Execution Checklist
+## 5. Disposable Execution Checklist
 
-If CTO later approves execution:
+If CTO later approves disposable execution:
 
 1. Confirm current database target.
-2. Confirm no production project is selected.
+2. Confirm no production or shared staging project is selected.
 3. Apply schema skeleton migration.
 4. Apply fictional seed only if schema succeeds.
 5. Run RLS denial tests.
 6. Capture pass/fail output without secrets.
-7. If any unexpected access appears, stop and run rollback in the same disposable/staging context.
+7. If any unexpected access appears, stop and run rollback in the same disposable context.
 
 ## 6. Rollback Checklist
 
@@ -96,7 +98,7 @@ The RLS denial draft covers:
 
 Expected pass:
 
-1. Forward migration applies in disposable/staging environment.
+1. Forward migration applies in disposable environment.
 2. Fictional seed inserts successfully.
 3. Denial tests return zero rows or permission denied as expected.
 4. Assigned sales rep can read only the active assigned customer.
@@ -121,25 +123,28 @@ This package does not authorize:
 1. Production migration.
 2. Production seed.
 3. Production rollback.
-4. Production API route.
-5. LINE integration.
-6. AI pricing automation.
-7. Readdy UI changes.
-8. Formal order creation.
-9. Inventory mutation.
-10. Secrets/env changes.
+4. Shared staging migration.
+5. Shared staging seed.
+6. Shared staging rollback.
+7. Production API route.
+8. LINE integration.
+9. AI pricing automation.
+10. Readdy UI changes.
+11. Formal order creation.
+12. Inventory mutation.
+13. Secrets/env changes.
 
 ## 10. Next Decision Gate
 
 Next recommended gate:
 
 ```text
-Phase 3B-1 Dry Run Review
+Phase 3B-2 Disposable Dry Run Review
 ```
 
 CTO should decide whether to:
 
 1. Run disposable dry-run only.
 2. Revise SQL before any execution.
-3. Approve staging execution after disposable dry-run passes.
+3. Consider a separate shared-staging gate only after disposable dry-run passes.
 4. Block execution until RLS helper/security-definer behavior is independently reviewed.
