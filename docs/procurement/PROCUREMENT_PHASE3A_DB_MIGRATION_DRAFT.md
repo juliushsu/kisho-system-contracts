@@ -17,6 +17,8 @@ Scope: Documentation / architecture / migration draft only
 5. Transactional records use status transitions and audit events.
 6. Pricing and order confirmation require approval gates.
 7. AI events are trace records, not authority to finalize actions.
+8. Phase 3B must include an issued quote table between quote drafts and order drafts.
+9. Phase 3B must decide whether product categories and price book items are normalized tables; this draft now recommends normalizing both.
 
 ## 2. Table Drafts
 
@@ -24,7 +26,7 @@ Scope: Documentation / architecture / migration draft only
 
 Purpose: Canonical procurement customer account.
 
-Key columns: `id`, `organization_id`, `customer_code`, `display_name`, `segment`, `status`, `tags`, `archived_at`, `created_at`, `updated_at`.
+Key columns: `id`, `organization_id`, `customer_code`, `display_name`, `segment`, `identity_status`, `dedupe_key`, `merged_into_customer_id`, `status`, `tags`, `archived_at`, `created_at`, `updated_at`.
 
 Relationships: parent to locations, users, sales assignments, quote requests, drafts, orders, lists.
 
@@ -35,6 +37,8 @@ RLS expectation: owner/admin all; sales assigned; customer users own customer on
 Audit expectation: create, update, archive, merge, identity repair.
 
 Future migration risk: duplicate identity and cross-domain customer mapping with Sake/Meat.
+
+Phase 3A review correction: `merged_into_customer_id` and `dedupe_key` are required before Phase 3B so customer merge/dedup does not become an unsafe ad hoc repair.
 
 ### 2.2 `procurement_customer_locations`
 
@@ -88,7 +92,7 @@ Future migration risk: overlapping assignments and historical ownership preserva
 
 Purpose: Procurement product family/concept.
 
-Key columns: `id`, `organization_id`, `product_code`, `name`, `category`, `status`, `source_domain`, `archived_at`.
+Key columns: `id`, `organization_id`, `category_id`, `product_code`, `name`, `status`, `source_domain`, `archived_at`.
 
 Relationships: parent to variants; may map to Sake/Meat domain products.
 
@@ -99,6 +103,22 @@ RLS expectation: internal read; customer read only if product is customer-visibl
 Audit expectation: create/update/archive, domain mapping changes.
 
 Future migration risk: catalog duplication with existing Sake/Meat catalogs.
+
+### 2.5A `procurement_product_categories`
+
+Purpose: Normalized category taxonomy for sake, tableware, meat, seafood, other, and future categories.
+
+Key columns: `id`, `organization_id`, `category_code`, `display_name`, `parent_category_id`, `status`, `sort_order`, `archived_at`.
+
+Relationships: parent to products; optional self-parent for category tree.
+
+Indexes: unique `(organization_id, category_code)`, `(organization_id, status)`, `(parent_category_id)`.
+
+RLS expectation: internal read; customer-visible categories only through approved catalog read model.
+
+Audit expectation: create/update/archive/reorder.
+
+Future migration risk: if Phase 3B uses enum-only categories, future category hierarchy and pricing rules will need a migration; normalized category table is recommended.
 
 ### 2.6 `procurement_product_variants`
 
@@ -164,11 +184,29 @@ Audit expectation: create/update/archive/version.
 
 Future migration risk: missing price book item table or JSON shape; needs review.
 
+Phase 3A review correction: price book item rows should be normalized instead of stored only as JSON.
+
+### 2.9A `procurement_price_book_items`
+
+Purpose: Versioned price entries inside a price book.
+
+Key columns: `id`, `organization_id`, `price_book_id`, `variant_id`, `category_id`, `price_amount`, `currency`, `minimum_allowed_price`, `margin_floor_ref`, `effective_from`, `effective_to`, `version_no`, `status`.
+
+Relationships: belongs to price book; references product variant or category.
+
+Indexes: `(price_book_id)`, `(variant_id)`, `(category_id)`, `(effective_from, effective_to)`, unique `(price_book_id, variant_id, version_no)` where applicable.
+
+RLS expectation: internal read; write through approved backend only.
+
+Audit expectation: create/update/supersede/archive; price changes require before/after audit.
+
+Future migration risk: money precision, category-level fallback precedence, version supersession rules.
+
 ### 2.10 `procurement_customer_price_rules`
 
 Purpose: Customer/category/product/variant-specific pricing rule.
 
-Key columns: `id`, `organization_id`, `customer_id`, `price_book_id`, `scope_type`, `scope_id`, `rule_type`, `value`, `effective_from`, `effective_to`, `approval_status`.
+Key columns: `id`, `organization_id`, `customer_id`, `price_book_id`, `scope_type`, `scope_id`, `rule_type`, `value`, `version_no`, `supersedes_rule_id`, `approval_status`, `approved_by_user_id`, `approved_at`, `effective_from`, `effective_to`.
 
 Relationships: belongs to customer and optional price book; referenced by quote drafts.
 
@@ -179,6 +217,8 @@ RLS expectation: internal only; customer sees resulting price only.
 Audit expectation: create/update/approve/archive; frontend direct writes forbidden.
 
 Future migration risk: pricing semantics, minimum margin thresholds, approval state.
+
+Phase 3A review correction: customer price rules need explicit versioning and supersession before Phase 3B.
 
 ### 2.11 `procurement_quote_requests`
 
@@ -228,13 +268,29 @@ Audit expectation: create/update/delete item while draft only.
 
 Future migration risk: money precision, currency, tax, margin snapshot.
 
+### 2.13A `procurement_quotes`
+
+Purpose: Immutable customer-facing quote version issued from an approved quote draft.
+
+Key columns: `id`, `organization_id`, `quote_draft_id`, `customer_id`, `customer_location_id`, `quote_number`, `version_no`, `status`, `issued_at`, `issued_by_user_id`, `valid_until`, `customer_visible_terms`, `customer_visible_total`, `currency`, `supersedes_quote_id`, `customer_confirmation_status`, `customer_confirmed_at`.
+
+Relationships: belongs to customer and source quote draft; may be superseded by another quote; may produce order draft.
+
+Indexes: `(organization_id, customer_id)`, unique `(organization_id, quote_number, version_no)`, `(quote_draft_id)`, `(status)`, `(valid_until)`.
+
+RLS expectation: internal + assigned sales; customer can see only issued own quotes and never internal margin/cost.
+
+Audit expectation: issue, supersede, expire, customer confirm, cancel.
+
+Future migration risk: quote item snapshot may require a separate `procurement_quote_items` table before Phase 3B if line-level issued quote history cannot be safely stored in immutable JSON.
+
 ### 2.14 `procurement_order_drafts`
 
 Purpose: Pre-confirmation order candidate.
 
-Key columns: `id`, `organization_id`, `customer_id`, `source_channel`, `source_quote_draft_id`, `status`, `fulfillment_status`, `assigned_sales_rep_id`, `risk_flags`.
+Key columns: `id`, `organization_id`, `customer_id`, `source_channel`, `source_quote_id`, `source_quote_draft_id`, `status`, `fulfillment_status`, `assigned_sales_rep_id`, `risk_flags`.
 
-Relationships: belongs to customer; parent to order draft items; may become order.
+Relationships: belongs to customer; may derive from issued quote or draft-only source; parent to order draft items; may become order.
 
 Indexes: `(organization_id, status)`, `(customer_id)`, `(assigned_sales_rep_id)`.
 
@@ -243,6 +299,8 @@ RLS expectation: internal + assigned sales; future customer access only when ena
 Audit expectation: create/update/customer confirmation/sales review.
 
 Future migration risk: conversion semantics to confirmed orders.
+
+Phase 3A review correction: `source_quote_id` should be preferred over `source_quote_draft_id` when customer-facing pricing is involved.
 
 ### 2.15 `procurement_order_draft_items`
 
@@ -361,9 +419,12 @@ Future migration risk: raw message privacy, LINE identity linkage, AI memory ret
 Before turning this into a real migration:
 
 1. Confirm table names and schema namespace.
-2. Decide whether product categories need a separate table in Phase 3B.
-3. Decide whether price book items require a separate table instead of JSON.
-4. Confirm money/currency precision.
-5. Confirm RLS helper functions.
-6. Confirm seed/mock strategy.
-7. Confirm rollback plan.
+2. Confirm `procurement_product_categories` normalization.
+3. Confirm `procurement_price_book_items` normalization.
+4. Confirm `procurement_quotes` and whether line snapshots require `procurement_quote_items`.
+5. Confirm money/currency precision.
+6. Confirm customer dedupe/merge constraints.
+7. Confirm sales assignment overlap rules.
+8. Confirm RLS helper functions.
+9. Confirm seed/mock strategy.
+10. Confirm rollback plan.

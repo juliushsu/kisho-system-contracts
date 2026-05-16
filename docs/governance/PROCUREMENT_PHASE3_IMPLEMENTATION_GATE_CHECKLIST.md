@@ -41,6 +41,18 @@ Changes required before implementation
 | Seed/mock strategy | Are staging seed fixtures safe and aligned with Readdy mock DTOs? | Yes |
 | Staging-only first strategy | Will Phase 3B run in staging only before any production discussion? | Yes |
 
+Phase 3A CTO review additions:
+
+| Gate | Required decision |
+| --- | --- |
+| Issued quote table | Confirm `procurement_quotes` is required between quote drafts and order drafts |
+| Quote item snapshots | Decide whether Phase 3B needs `procurement_quote_items` or immutable JSON line snapshots |
+| Product categories | Confirm normalized `procurement_product_categories` |
+| Price book items | Confirm normalized `procurement_price_book_items` |
+| Price rule versioning | Confirm `version_no` and `supersedes_rule_id` semantics |
+| Customer merge/dedup | Confirm `dedupe_key`, `identity_status`, and `merged_into_customer_id` semantics |
+| Sales assignment overlap | Confirm whether overlaps are forbidden or resolved by precedence |
+
 ## 3. Specific Hard Requirements
 
 1. Customer users cannot see other customers.

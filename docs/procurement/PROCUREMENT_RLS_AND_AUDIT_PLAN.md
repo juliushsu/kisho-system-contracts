@@ -49,6 +49,14 @@ Hard rule:
 customer users 不可看其他 customer
 ```
 
+Customer identity merge / dedup requirements:
+
+1. Customer merge must be owner/admin only.
+2. A merged customer must retain `merged_into_customer_id` or equivalent canonical reference.
+3. Historical quote/order/audit records must not be reassigned silently.
+4. Customer users attached to a merged-away customer must not automatically gain access to the target customer until membership is explicitly reviewed.
+5. Every merge or dedup repair emits an audit event with previous and target customer IDs.
+
 ## 4. Sales Rep Scoped Access
 
 Sales reps:
@@ -58,6 +66,8 @@ Sales reps:
 3. Cannot see unassigned customers unless owner/admin grants support scope.
 4. Cannot override pricing thresholds without approval.
 5. Cannot confirm orders without audit.
+6. Assignment access must respect `effective_from`, `effective_to`, `status`, and scope.
+7. Overlapping assignments must be either explicitly allowed with precedence rules or blocked by constraints.
 
 Hard rule:
 
@@ -175,6 +185,10 @@ Minimum audit columns:
 | `customer_id` | Customer scope when applicable |
 | `risk_class` | low, medium, high_pricing, high_commitment |
 | `metadata` | Non-secret structured details |
+| `before_snapshot` | Non-secret changed fields before action, when applicable |
+| `after_snapshot` | Non-secret changed fields after action, when applicable |
+| `approval_ref` | Approval or confirmation reference when applicable |
+| `idempotency_key` | Duplicate prevention for external/system events |
 | `created_at` | Timestamp |
 
 ## 12. Forbidden Direct Writes
@@ -219,6 +233,7 @@ Candidate helper functions:
 | `is_platform_owner(user_id)` | Platform owner/admin access |
 | `is_procurement_admin(user_id, organization_id)` | Procurement admin access |
 | `is_sales_rep_for_customer(user_id, customer_id)` | Sales scoped customer access |
+| `is_sales_rep_for_customer_at(user_id, customer_id, at_time)` | Sales access with effective window |
 | `is_customer_user_for_customer(user_id, customer_id)` | Customer portal customer access |
 | `can_view_quote_request(user_id, quote_request_id)` | Quote request visibility |
 | `can_view_quote_draft(user_id, quote_draft_id)` | Internal quote draft visibility |
@@ -246,5 +261,8 @@ Required tests:
 10. Service role path writes audit event.
 11. Archived records are hidden by default where appropriate.
 12. RLS policies hold in staging with seeded multi-tenant data.
+13. Expired sales assignments no longer grant access.
+14. Merged customer memberships do not leak into target customer automatically.
+15. Quote/customer-facing views do not expose internal supplier cost, margin, or guardrail thresholds.
 
 Phase 3B should not proceed until these tests are represented in the migration implementation plan.

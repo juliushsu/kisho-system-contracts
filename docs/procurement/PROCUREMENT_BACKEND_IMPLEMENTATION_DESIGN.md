@@ -57,10 +57,10 @@ This design does not authorize:
 | Group | Tables |
 | --- | --- |
 | Customer | `procurement_customers`, `procurement_customer_locations`, `procurement_customer_users`, `procurement_sales_assignments` |
-| Catalog | `procurement_products`, `procurement_product_variants` |
+| Catalog | `procurement_product_categories`, `procurement_products`, `procurement_product_variants` |
 | Supplier | `procurement_supplier_sources`, `procurement_supplier_quotes` |
-| Pricing | `procurement_price_books`, `procurement_customer_price_rules` |
-| Quote | `procurement_quote_requests`, `procurement_quote_drafts`, `procurement_quote_draft_items` |
+| Pricing | `procurement_price_books`, `procurement_price_book_items`, `procurement_customer_price_rules` |
+| Quote | `procurement_quote_requests`, `procurement_quote_drafts`, `procurement_quote_draft_items`, `procurement_quotes` |
 | Order | `procurement_order_drafts`, `procurement_order_draft_items`, `procurement_orders`, `procurement_order_items` |
 | Preference | `procurement_lists`, `procurement_list_items` |
 | Governance | `procurement_audit_events`, `procurement_ai_events` |
@@ -144,6 +144,26 @@ Backend expectations:
 4. `approved_for_quote` means ready to issue a quote, not automatically sent.
 5. Quote issuance should be a separately approved phase.
 
+## 8.5 Issued Quote Lifecycle
+
+Phase 3A review requires an explicit issued quote record between quote draft and order draft.
+
+```text
+quote_draft approved_for_quote
+-> procurement_quotes issued
+-> customer_confirmation_pending
+-> customer_accepted / expired / superseded / cancelled
+-> order_draft
+```
+
+Backend expectations:
+
+1. `procurement_quotes` is the immutable customer-facing version generated from an approved quote draft.
+2. Quote lines should snapshot customer-facing price, currency, validity, and terms.
+3. Internal supplier cost, margin, guardrail thresholds, and pricing review notes must not be customer-visible.
+4. A quote extension or superseding version creates a new quote version and audit event.
+5. Order drafts should derive from issued quotes when pricing was customer-facing.
+
 ## 9. Order Draft Lifecycle
 
 ```text
@@ -158,7 +178,7 @@ draft
 
 Backend expectations:
 
-1. Order drafts may derive from quote drafts, customer portal carts, sales entry, or future LINE.
+1. Order drafts may derive from issued quotes, customer portal carts, sales entry, or future LINE.
 2. Order drafts must not reserve or deduct inventory.
 3. Customer confirmation and sales confirmation are separate audit events.
 4. `confirmed` is not allowed until Phase 3E approval gate is reviewed.

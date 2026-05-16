@@ -53,7 +53,7 @@ Draft-only rules:
 
 | API/RPC | Actor allowed | Required approval | Audit event | DTO input/output | Phase |
 | --- | --- | --- | --- | --- | --- |
-| `approve_quote` | owner/admin, pricing reviewer, assigned sales where allowed | Human pricing/sales approval | `quote_approved` | input: quote_draft_id, approval reason; output: approved quote state | 3E |
+| `approve_quote` | owner/admin, pricing reviewer, assigned sales where allowed | Human pricing/sales approval | `quote_approved`, `quote_issued` if issued | input: quote_draft_id, approval reason, valid_until; output: issued `procurement_quote` DTO | 3E |
 | `confirm_order` | owner/admin, assigned sales with customer confirmation | Customer + sales/system approval | `order_confirmed` | input: order_draft_id, confirmation refs; output: order DTO | 3E |
 | `mark_supplier_procurement_required` | procurement_admin, assigned sales | Procurement review | `supplier_procurement_required_marked` | input: order/quote item refs; output: status | 3E |
 | `mark_inventory_allocation_required` | procurement_admin, fulfillment coordinator | Fulfillment/inventory review | `inventory_allocation_required_marked` | input: order item refs; output: status | 3E |
@@ -63,7 +63,8 @@ Approval rules:
 1. Approval APIs must validate actor role and scope.
 2. Approval APIs must append audit before or atomically with state transition.
 3. AI agents cannot call approval APIs as final actor.
-4. `confirm_order` must not deduct inventory.
+4. `approve_quote` should create or reference an immutable issued quote version before customer-facing confirmation.
+5. `confirm_order` must not deduct inventory.
 
 ## 5. Forbidden In Early Phase
 
