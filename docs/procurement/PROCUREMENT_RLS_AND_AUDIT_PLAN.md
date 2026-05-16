@@ -10,6 +10,8 @@ Scope: Documentation / architecture / migration draft only
 
 Phase 3B-1 update: a staging-only schema skeleton file has been prepared, but not executed. Its RLS posture is intentionally conservative: enable RLS, avoid public broad access, grant only minimal authenticated SELECT policies for customer-own and assigned-sales reads, and defer owner/admin broad access until the canonical role source is confirmed.
 
+Phase 3B-1 static review update: quote request base rows and sales assignment base rows are not exposed to customer users because they contain internal triage / ownership context. Customer-facing request status should be provided later through a safe read model.
+
 ## 1. Tenant Isolation Model
 
 Procurement data must be isolated by organization/tenant while supporting platform owner governance.
@@ -60,6 +62,7 @@ Customer identity merge / dedup requirements:
 5. Historical quote/order/audit records must not be reassigned silently.
 6. Customer users attached to a merged-away customer must not automatically gain access to the target customer until membership is explicitly reviewed.
 7. Every future merge or dedup repair emits an audit event with previous and target customer IDs.
+8. Phase 3B-1 `merge_candidate_of` uses restrictive FK semantics; it must not null or change tenant identity automatically.
 
 ## 4. Sales Rep Scoped Access
 

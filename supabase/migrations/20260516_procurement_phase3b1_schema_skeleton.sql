@@ -33,7 +33,6 @@ create table if not exists public.procurement_customers (
   organization_id uuid not null,
   customer_code text,
   display_name text not null,
-  segment text,
   status text not null default 'active'
     check (status in ('prospect', 'active', 'inactive', 'archived')),
   identity_status text not null default 'active'
@@ -41,15 +40,13 @@ create table if not exists public.procurement_customers (
   merge_candidate_of uuid,
   archived_at timestamptz,
   archived_reason text,
-  tags jsonb not null default '[]'::jsonb,
-  metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint procurement_customers_org_id_unique unique (organization_id, id),
   constraint procurement_customers_merge_candidate_fk
     foreign key (organization_id, merge_candidate_of)
     references public.procurement_customers (organization_id, id)
-    on delete set null
+    on delete restrict
 );
 
 comment on table public.procurement_customers is
@@ -667,10 +664,7 @@ for select
 to authenticated
 using (
   archived_at is null
-  and (
-    sales_rep_user_id = auth.uid()
-    or public.procurement_is_customer_user_for_customer(auth.uid(), customer_id)
-  )
+  and sales_rep_user_id = auth.uid()
 );
 
 create policy procurement_products_org_visible_select
@@ -710,10 +704,7 @@ for select
 to authenticated
 using (
   archived_at is null
-  and (
-    public.procurement_is_customer_user_for_customer(auth.uid(), customer_id)
-    or public.procurement_is_sales_rep_for_customer_at(auth.uid(), customer_id, now())
-  )
+  and public.procurement_is_sales_rep_for_customer_at(auth.uid(), customer_id, now())
 );
 
 create policy procurement_quote_drafts_assigned_sales_select

@@ -65,9 +65,11 @@ The RLS stance is deliberately conservative:
 5. Customer users may read only their own customer-scope records.
 6. Sales reps may read assigned customer records only within `effective_from` / `effective_to`.
 7. Customer users cannot read quote drafts or quote draft items.
-8. Catalog rows require organization access and `is_customer_visible = true`.
-9. The audit table has no authenticated read policy.
-10. Owner/admin broad access is intentionally TODO until the canonical role source is confirmed.
+8. Customer users cannot read quote request base rows in Phase 3B-1 because `risk_flags` and triage state are internal.
+9. Customer users cannot read sales assignment base rows because sales ownership history is internal.
+10. Catalog rows require organization access and `is_customer_visible = true`.
+11. The audit table has no authenticated read policy.
+12. Owner/admin broad access is intentionally TODO until the canonical role source is confirmed.
 
 This posture favors false negatives over data leakage.
 
@@ -98,6 +100,7 @@ Phase 3B-1 does not add frontend-visible audit reads. Future write APIs must app
 6. `merge_candidate_of` is advisory; there is no customer merge function.
 7. No staging seed data is included in the migration.
 8. RLS policies have not been executed or tested in a live staging database in this round.
+9. Customer-facing quote request reads require a future safe read model/view; base table reads remain assigned-sales only.
 
 ## 7. Rollback Notes
 
