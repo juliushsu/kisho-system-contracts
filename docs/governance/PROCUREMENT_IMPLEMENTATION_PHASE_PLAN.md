@@ -1,12 +1,12 @@
 # Procurement Implementation Phase Plan
 
 Status: Proposed
-Date: 2026-05-15
+Date: 2026-05-16
 Scope: Documentation / governance / architecture only
 
-本輪為 canonical contracts phase only。
+本文件目前納入 Phase 3A backend implementation design。
 
-本文件不涉及 production code、不涉及 DB migration、不涉及 secrets / env、不涉及 Readdy UI 修改、不產生 API route、不實作 Edge Function。後續需由 CTO review 後才可進入 implementation phase。
+本文件不涉及 production code、不涉及 DB migration、不涉及 secrets / env、不涉及 Readdy UI 修改、不產生 API route、不實作 Edge Function、不接 LINE、不做 AI pricing automation。後續需由 CTO review 後才可進入 implementation phase。
 
 ## 1. Purpose
 
@@ -18,9 +18,14 @@ No phase below is authorized by this document alone. Each implementation phase r
 
 | Phase | Name | Goal | Allowed in current round |
 | --- | --- | --- | --- |
-| Phase 1 | Canonical contracts only | Define data, identity, event, pricing, and boundary contracts | Yes |
-| Phase 2 | Platform shell | Add approved route/navigation shell and governance surfaces | No |
-| Phase 3 | Procurement admin skeleton | Add internal procurement admin screens and mock-safe flows | No |
+| Phase 1 | Canonical contracts only | Define data, identity, event, pricing, and boundary contracts | Completed |
+| Phase 2 | Platform shell | Add approved route/navigation shell and governance surfaces | Completed as Readdy VER294 shell acceptance |
+| Phase 3A | Backend design only | Backend implementation design, RLS/audit plan, migration draft, API/RPC draft | Yes |
+| Phase 3B | Staging migration draft implementation | Convert reviewed draft into staging-only migration | No |
+| Phase 3C | Read model APIs | Implement safe read RPC/API for procurement admin shell | No |
+| Phase 3D | Draft write APIs | Implement quote request/draft and order draft write APIs | No |
+| Phase 3E | Approval gates | Implement quote/order/supplier/inventory-review approval gates and audit | No |
+| Phase 3F | Customer B2B portal backend | Backend for customer portal access and customer-visible flows | No |
 | Phase 4 | Customer B2B portal | Add `/b2b` customer-facing procurement portal | No |
 | Phase 5 | LINE commerce integration | Connect LINE inquiry to draft/review flow | No |
 | Phase 6 | AI pricing + recommendation | Add guarded AI pricing and follow-up assistant | No |
@@ -84,27 +89,131 @@ Risks:
 2. Customer-facing `/b2b` must not expose internal pricing or mock secrets.
 3. Tableware must remain procurement category, not separate admin.
 
-## 5. Phase 3: Procurement Admin Skeleton
+## 5. Phase 3A: Backend Design Only
 
-Goal: Build internal procurement admin skeleton for operators and sales.
+Goal: Create backend implementation design without running migrations or implementing APIs.
 
-Candidate scope:
+Deliverables:
 
-1. Customer context read model UI.
-2. Product/category catalog skeleton.
-3. Quote request queue.
-4. Quote draft review surface.
-5. Pricing review flags.
-6. Procurement list management.
+1. `docs/procurement/PROCUREMENT_BACKEND_IMPLEMENTATION_DESIGN.md`
+2. `docs/procurement/PROCUREMENT_RLS_AND_AUDIT_PLAN.md`
+3. `docs/procurement/PROCUREMENT_PHASE3A_DB_MIGRATION_DRAFT.md`
+4. `docs/procurement/PROCUREMENT_API_RPC_CONTRACT_DRAFT.md`
+5. `docs/governance/PROCUREMENT_PHASE3_IMPLEMENTATION_GATE_CHECKLIST.md`
+
+Allowed work:
+
+1. Markdown architecture documents.
+2. Migration draft in docs only.
+3. RLS/audit design.
+4. API/RPC contract draft.
+5. CTO gate checklist.
+
+Forbidden work:
+
+1. Real migration files.
+2. Production code.
+3. API route or RPC implementation.
+4. Edge Function implementation.
+5. LINE integration.
+6. AI pricing automation.
+7. Readdy UI changes.
+8. Secrets/env access.
+
+## 6. Phase 3B: Staging Migration Draft Implementation
+
+Goal: Convert CTO-reviewed Phase 3A draft into staging-only migration work.
 
 Required gates:
 
-1. Mock or contract-backed data only unless migration is separately approved.
-2. No real supplier procurement execution.
-3. No automatic pricing approval.
-4. No customer-facing quote send until approval flow exists.
+1. CTO accepts table naming.
+2. RLS helper functions are reviewed.
+3. Audit event minimum schema is accepted.
+4. Rollback strategy is documented.
+5. Seed/mock strategy is staging-safe.
+6. No production deployment.
 
-## 6. Phase 4: Customer B2B Portal
+## 7. Phase 3C: Read Model APIs
+
+Goal: Implement safe read RPC/API for `/procurement-admin`.
+
+Candidate scope:
+
+1. `get_procurement_dashboard_summary`
+2. `list_procurement_customers`
+3. `get_procurement_customer_detail`
+4. `list_procurement_products`
+5. `list_quote_requests`
+6. `list_quote_drafts`
+7. `list_order_drafts`
+8. `list_procurement_orders`
+9. `get_pricing_governance_summary`
+
+Required gates:
+
+1. Staging migration is verified.
+2. RLS denial tests pass.
+3. Pricing and supplier cost visibility rules pass.
+4. Readdy can read without write permission.
+
+## 8. Phase 3D: Draft Write APIs
+
+Goal: Implement draft-only write APIs.
+
+Candidate scope:
+
+1. `create_quote_request`
+2. `create_quote_draft`
+3. `update_quote_draft`
+4. `submit_quote_draft_for_approval`
+5. `create_order_draft`
+6. `update_order_draft`
+
+Required gates:
+
+1. Audit append path exists.
+2. Draft writes cannot confirm orders.
+3. Draft writes cannot update pricing rules directly.
+4. Draft writes cannot reserve or deduct inventory.
+
+## 9. Phase 3E: Approval Gates
+
+Goal: Implement explicit human approval gates.
+
+Candidate scope:
+
+1. `approve_quote`
+2. `confirm_order`
+3. `mark_supplier_procurement_required`
+4. `mark_inventory_allocation_required`
+
+Required gates:
+
+1. Approval actors and role matrix are accepted.
+2. Order confirmation audit is mandatory.
+3. AI actor is blocked from final approval.
+4. Inventory mutation remains outside Procurement.
+
+## 10. Phase 3F: Customer B2B Portal Backend
+
+Goal: Build customer portal backend access after internal procurement read/write foundations are safe.
+
+Candidate scope:
+
+1. Customer account-scoped read models.
+2. Customer quote request creation.
+3. Customer procurement lists.
+4. Customer confirmation trace.
+5. Customer-visible order summaries.
+
+Required gates:
+
+1. Customer portal RLS tests pass.
+2. Customer-visible pricing is reviewed.
+3. Internal margin and supplier cost are hidden.
+4. LINE identity remains separate until Phase 5.
+
+## 11. Phase 4: Customer B2B Portal
 
 Goal: Build customer-facing `/b2b` procurement portal.
 
@@ -125,7 +234,7 @@ Required gates:
 4. Quote expiration behavior defined.
 5. Customer confirmation audit defined.
 
-## 7. Phase 5: LINE Commerce Integration
+## 12. Phase 5: LINE Commerce Integration
 
 Goal: Connect LINE inquiry to AI-assisted draft and sales review flow.
 
@@ -146,7 +255,7 @@ Required gates:
 4. No automatic order confirmation.
 5. No secrets or token exposure in docs/logs/UI.
 
-## 8. Phase 6: AI Pricing + Recommendation
+## 13. Phase 6: AI Pricing + Recommendation
 
 Goal: Add AI assistance for pricing review, margin risk, reorder suggestions, and follow-up.
 
@@ -166,13 +275,17 @@ Required gates:
 4. AI memory boundaries reviewed.
 5. Audit exists for AI suggestions and human approvals.
 
-## 9. Recommended Implementation Order
+## 14. Recommended Implementation Order
 
-Recommended order after Phase 1:
+Recommended order after Phase 2:
 
 ```text
-Platform shell
--> Procurement admin skeleton
+Backend design only
+-> Staging migration draft implementation
+-> Read model APIs
+-> Draft write APIs
+-> Approval gates
+-> Customer B2B portal backend
 -> Customer B2B portal
 -> LINE commerce integration
 -> AI pricing + recommendation
@@ -180,13 +293,15 @@ Platform shell
 
 Reasoning:
 
-1. Platform shell establishes safe navigation and product boundaries.
-2. Procurement admin defines internal review workflow before customer exposure.
-3. Customer portal should only show approved customer-visible data.
-4. LINE integration should not exist before draft/review concepts are implemented.
-5. AI pricing should come after pricing rules and approvals exist.
+1. Backend design prevents premature migration and unsafe writes.
+2. Staging migration lets RLS and audit be tested before production discussion.
+3. Read models let Readdy move beyond mocks without write risk.
+4. Draft writes come before approval-gated commitments.
+5. Customer portal should only show approved customer-visible data.
+6. LINE integration should not exist before draft/review concepts are implemented.
+7. AI pricing should come after pricing rules and approvals exist.
 
-## 10. Current Round Constraints
+## 15. Current Round Constraints
 
 This round explicitly forbids:
 
@@ -196,5 +311,8 @@ This round explicitly forbids:
 4. API route generation.
 5. Edge Function implementation.
 6. Secrets / env access.
+7. LINE integration.
+8. AI pricing automation.
+9. Real order writes.
 
 Any request to cross those boundaries must become a separate implementation phase after CTO review.
