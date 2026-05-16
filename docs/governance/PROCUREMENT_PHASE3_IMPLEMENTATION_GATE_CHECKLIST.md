@@ -12,6 +12,8 @@ Phase 3B-1 update: CTO accepted the Phase 3A must-fix direction and allowed prep
 
 Phase 3B-2 update: first execution path is disposable Supabase dry-run only. Shared staging remains forbidden until disposable dry-run evidence is reviewed and CTO opens a separate gate.
 
+Phase 3C update: read model API contracts are allowed as documentation only. API route/RPC implementation remains blocked until disposable dry-run evidence and CTO approval.
+
 ## 1. CTO Review Requirement
 
 Phase 3B+ must not begin until CTO reviews and accepts this checklist.
@@ -148,6 +150,19 @@ Phase 3C read model APIs may start only if:
 4. Pricing and supplier cost fields are hidden from unauthorized actors.
 5. CTO approves moving from dry-run to read model API planning.
 6. Shared staging remains blocked until a separate gate is opened.
+
+Phase 3C read model contract requirements:
+
+1. Readdy UI must use read model endpoints/RPCs only and must not directly query procurement base tables.
+2. Every endpoint requires `organization_id`.
+3. Customer users are excluded from `/procurement-admin` Phase 3C read models.
+4. Quote drafts are owner/admin, procurement admin, or assigned-sales scoped only.
+5. General sales cannot see supplier cost, landed cost, internal margin, or pricing guardrail thresholds.
+6. `procurement_audit_events` is not exposed through general read APIs.
+7. Pricing governance read model must be safe summary only.
+8. Order draft read model remains mock/future until order draft tables and RLS are approved.
+9. All Phase 3C endpoints are read-only and must not write audit events except optional safe read tracing outside `procurement_audit_events`.
+10. No API route/RPC implementation is authorized by the contract document alone.
 
 ## 6. Phase 3D Entry Criteria
 

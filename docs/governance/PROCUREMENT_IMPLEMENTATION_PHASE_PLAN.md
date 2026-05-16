@@ -8,6 +8,8 @@ Scope: Documentation / governance / architecture only
 
 本文件不涉及 production code、不涉及 DB migration、不涉及 secrets / env、不涉及 Readdy UI 修改、不產生 API route、不實作 Edge Function、不接 LINE、不做 AI pricing automation。後續需由 CTO review 後才可進入 implementation phase。
 
+Phase 3C update: read model API contracts are defined, but implementation remains blocked until Phase 3B disposable dry-run, rollback, and RLS denial evidence are reviewed.
+
 ## 1. Purpose
 
 This plan defines the recommended phase order for implementing the 大皇居 B2B procurement platform after canonical contracts are reviewed.
@@ -22,7 +24,7 @@ No phase below is authorized by this document alone. Each implementation phase r
 | Phase 2 | Platform shell | Add approved route/navigation shell and governance surfaces | Completed as Readdy VER294 shell acceptance |
 | Phase 3A | Backend design only | Backend implementation design, RLS/audit plan, migration draft, API/RPC draft | Yes |
 | Phase 3B | Staging migration draft implementation | Convert reviewed draft into staging-only migration | No |
-| Phase 3C | Read model APIs | Implement safe read RPC/API for procurement admin shell | No |
+| Phase 3C | Read model APIs | Define and later implement safe read RPC/API for procurement admin shell after disposable dry-run | Contract only |
 | Phase 3D | Draft write APIs | Implement quote request/draft and order draft write APIs | No |
 | Phase 3E | Approval gates | Implement quote/order/supplier/inventory-review approval gates and audit | No |
 | Phase 3F | Customer B2B portal backend | Backend for customer portal access and customer-visible flows | No |
@@ -135,7 +137,7 @@ Required gates:
 
 ## 7. Phase 3C: Read Model APIs
 
-Goal: Implement safe read RPC/API for `/procurement-admin`.
+Goal: Define, then later implement, safe read RPC/API for `/procurement-admin`.
 
 Candidate scope:
 
@@ -143,18 +145,31 @@ Candidate scope:
 2. `list_procurement_customers`
 3. `get_procurement_customer_detail`
 4. `list_procurement_products`
-5. `list_quote_requests`
-6. `list_quote_drafts`
-7. `list_order_drafts`
-8. `list_procurement_orders`
-9. `get_pricing_governance_summary`
+5. `list_procurement_quote_requests`
+6. `list_procurement_quote_drafts`
+7. `list_procurement_order_drafts_mock_or_future`
+8. `get_procurement_pricing_governance_summary_safe`
 
 Required gates:
 
-1. Staging migration is verified.
+1. Disposable dry-run is applied, verified, rolled back, and reviewed.
 2. RLS denial tests pass.
 3. Pricing and supplier cost visibility rules pass.
-4. Readdy can read without write permission.
+4. CTO approves read model implementation scope.
+5. Readdy can read through read models without direct table access or write permission.
+6. Shared staging remains blocked until a separate gate is opened.
+
+Phase 3C contract deliverable:
+
+1. `docs/procurement/PROCUREMENT_PHASE3C_READ_MODEL_API_CONTRACT.md`
+
+Phase 3C hard exclusions:
+
+1. Customer users do not enter `/procurement-admin` read model.
+2. No supplier cost, internal margin, or guardrail thresholds to general sales.
+3. No general audit event read API.
+4. No real order draft/order read implementation until order tables are approved.
+5. No API route implementation in contract-only rounds.
 
 ## 8. Phase 3D: Draft Write APIs
 

@@ -8,6 +8,8 @@ Scope: Documentation / architecture / migration draft only
 
 本輪禁止實際 migration、production code、API route implementation、Edge Function implementation、LINE integration、AI pricing automation、Readdy UI work、secrets / env access。
 
+Phase 3C update: detailed read model endpoint contracts are defined in `PROCUREMENT_PHASE3C_READ_MODEL_API_CONTRACT.md`. Phase 3C remains read-only and may not be implemented until disposable dry-run, rollback, and RLS denial evidence are reviewed.
+
 ## 1. Contract Principles
 
 1. Read APIs arrive before write APIs.
@@ -21,15 +23,23 @@ Scope: Documentation / architecture / migration draft only
 
 | API/RPC | Actor allowed | Required approval | Audit event | DTO input/output | Phase |
 | --- | --- | --- | --- | --- | --- |
-| `get_procurement_dashboard_summary` | owner/admin, procurement_admin, assigned sales scoped | None | optional read trace | input: org scope/filter; output: dashboard summary DTO | 3C |
-| `list_procurement_customers` | owner/admin, procurement_admin, assigned sales scoped | None | optional read trace | input: filters/page; output: customer list DTO | 3C |
-| `get_procurement_customer_detail` | owner/admin, procurement_admin, assigned sales, customer user own customer | None | optional read trace | input: customer_id; output: customer detail DTO | 3C |
-| `list_procurement_products` | owner/admin, procurement_admin, sales; customer portal later customer-visible only | None | optional read trace | input: category/status/page; output: product list DTO | 3C |
-| `list_quote_requests` | owner/admin, procurement_admin, assigned sales, customer own requests later | None | optional read trace | input: status/customer/source; output: quote request list DTO | 3C |
-| `list_quote_drafts` | owner/admin, procurement_admin, assigned sales | None | optional read trace | input: approval_state/customer; output: quote draft list DTO | 3C |
-| `list_order_drafts` | owner/admin, procurement_admin, assigned sales | None | optional read trace | input: status/customer; output: order draft list DTO | 3C |
-| `list_procurement_orders` | owner/admin, procurement_admin, assigned sales, customer own confirmed orders later | None | optional read trace | input: status/customer; output: order list DTO | 3C/3F |
-| `get_pricing_governance_summary` | owner/admin, procurement_admin, pricing reviewer | None | optional read trace | input: org/customer/category; output: pricing governance DTO | 3C |
+| `get_procurement_dashboard_summary` | owner/admin, procurement_admin, assigned sales scoped | None | read trace only | input: org scope/filter; output: dashboard summary DTO | 3C |
+| `list_procurement_customers` | owner/admin, procurement_admin, assigned sales scoped | None | read trace only | input: filters/page; output: customer list DTO | 3C |
+| `get_procurement_customer_detail` | owner/admin, procurement_admin, assigned sales scoped | None | read trace only | input: customer_id; output: customer detail DTO | 3C |
+| `list_procurement_products` | owner/admin, procurement_admin, assigned sales safe catalog | None | read trace only | input: category/status/page; output: product list DTO | 3C |
+| `list_procurement_quote_requests` | owner/admin, procurement_admin, assigned sales scoped | None | read trace only | input: status/customer/source; output: quote request list DTO | 3C |
+| `list_procurement_quote_drafts` | owner/admin, procurement_admin, assigned sales scoped | None | read trace only | input: approval_status/customer; output: quote draft list DTO | 3C |
+| `list_procurement_order_drafts_mock_or_future` | owner/admin, procurement_admin, assigned sales scoped when future backend exists | None | read trace only | input: status/customer; output: mock/future order draft list DTO | 3C marker only |
+| `get_procurement_pricing_governance_summary_safe` | owner/admin, procurement_admin, pricing reviewer; limited sales safe labels | None | read trace only | input: org/customer/category; output: safe pricing governance DTO | 3C safe summary |
+
+Phase 3C read-only rules:
+
+1. Customer users are not part of `/procurement-admin` Phase 3C read model.
+2. Readdy UI must not directly query base procurement tables.
+3. General sales must not receive supplier cost, internal margin, landed cost, or guardrail thresholds.
+4. `procurement_audit_events` must not be exposed through a general read API.
+5. Order draft endpoint is mock/future only until order draft tables and RLS are approved.
+6. Every endpoint requires `organization_id`.
 
 ## 3. Write Draft-Only APIs / RPCs
 
