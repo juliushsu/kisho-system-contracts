@@ -14,6 +14,8 @@ supabase/migrations/20260516_procurement_phase3b1_schema_skeleton.sql
 
 本輪未執行 migration、不碰 production、不接 API / LINE / AI / Readdy UI、不碰 secrets / env。
 
+Phase 3B-1 dry-run package update: rollback, fictional seed, and RLS denial test drafts have been prepared for review, but none have been executed.
+
 ## 1. Review Result
 
 ```text
@@ -57,9 +59,16 @@ Before any staging execution:
 2. Confirm `anon` and `authenticated` roles exist in the target staging environment.
 3. Confirm `auth.uid()` is available in the target staging environment.
 4. Confirm security-definer helper ownership and RLS behavior in Supabase, especially with forced RLS.
-5. Prepare a tested rollback script that drops policies, triggers, tables, and helper functions in dependency order.
-6. Prepare fictional staging seed data and denial tests before any broader read-model/API work.
+5. Review the prepared rollback script that drops policies, triggers, tables, and helper functions in dependency order.
+6. Review the prepared fictional staging seed data and denial tests before any broader read-model/API work.
 7. Decide whether owner/admin broad access remains deferred or is implemented through an accepted role source.
+
+Prepared package files:
+
+1. `supabase/migrations/rollback/20260516_procurement_phase3b1_schema_skeleton_rollback.sql`
+2. `supabase/seed/procurement_phase3b1_fictional_seed.sql`
+3. `scripts/procurement_phase3b1_rls_denial_tests.sql`
+4. `docs/governance/PROCUREMENT_PHASE3B1_DRY_RUN_AND_ROLLBACK_PLAN.md`
 
 ## 4. Nice-To-Have
 
@@ -91,17 +100,17 @@ A manual rollback should drop dependent objects in this order:
 
 1. Policies on all procurement tables.
 2. Triggers on tables.
-3. `procurement_quote_draft_items`
-4. `procurement_quote_drafts`
-5. `procurement_quote_requests`
-6. `procurement_product_variants`
-7. `procurement_products`
-8. `procurement_sales_assignments`
-9. `procurement_customer_users`
-10. `procurement_customer_locations`
-11. `procurement_customers`
-12. `procurement_audit_events`
-13. Helper functions.
+3. Helper functions after dependent policies/triggers are removed.
+4. `procurement_quote_draft_items`
+5. `procurement_quote_drafts`
+6. `procurement_quote_requests`
+7. `procurement_product_variants`
+8. `procurement_products`
+9. `procurement_sales_assignments`
+10. `procurement_customer_users`
+11. `procurement_customer_locations`
+12. `procurement_customers`
+13. `procurement_audit_events`
 
 The actual rollback SQL should be reviewed in Phase 3B-2 before any migration execution.
 
@@ -110,7 +119,7 @@ The actual rollback SQL should be reviewed in Phase 3B-2 before any migration ex
 Recommendation:
 
 ```text
-Staging execution can be considered after CTO approves this static review and after a disposable dry-run / rollback script are prepared.
+Disposable dry-run can be considered after CTO approves this static review and the dry-run package. Staging execution should wait until disposable dry-run results are reviewed.
 ```
 
 Do not execute against production. Do not proceed directly to API writes, LINE, AI pricing, Readdy UI, formal order creation, inventory mutation, or production deployment.

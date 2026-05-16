@@ -22,6 +22,12 @@ Execution status:
 Not executed
 ```
 
+Dry-run package status:
+
+```text
+Prepared for review; not executed
+```
+
 ## 2. Tables Created
 
 The staging skeleton defines only these tables:
@@ -53,6 +59,17 @@ Phase 3B-1 excludes:
 8. Orders, order confirmation, order items, and inventory mutation.
 9. Supplier sources, supplier quotes, supplier cost, price books, customer price rules, and margin automation.
 10. Real seed data or real customer data.
+
+## 3.1 Dry-Run Package
+
+Prepared package files:
+
+1. `supabase/migrations/rollback/20260516_procurement_phase3b1_schema_skeleton_rollback.sql`
+2. `supabase/seed/procurement_phase3b1_fictional_seed.sql`
+3. `scripts/procurement_phase3b1_rls_denial_tests.sql`
+4. `docs/governance/PROCUREMENT_PHASE3B1_DRY_RUN_AND_ROLLBACK_PLAN.md`
+
+These files are for CTO review and disposable/staging planning only. They were not executed in the package-preparation round.
 
 ## 4. RLS Posture
 
@@ -101,6 +118,7 @@ Phase 3B-1 does not add frontend-visible audit reads. Future write APIs must app
 7. No staging seed data is included in the migration.
 8. RLS policies have not been executed or tested in a live staging database in this round.
 9. Customer-facing quote request reads require a future safe read model/view; base table reads remain assigned-sales only.
+10. Fictional seed exists as a separate review file and must not be run in production.
 
 ## 7. Rollback Notes
 
@@ -116,6 +134,9 @@ If this draft is later executed in staging, rollback should be planned before ex
 Suggested rollback order for a clean staging reset:
 
 ```text
+policies
+triggers
+helper functions
 procurement_quote_draft_items
 procurement_quote_drafts
 procurement_quote_requests
@@ -126,12 +147,23 @@ procurement_customer_users
 procurement_customer_locations
 procurement_customers
 procurement_audit_events
-helper functions
+```
+
+Rollback draft prepared:
+
+```text
+supabase/migrations/rollback/20260516_procurement_phase3b1_schema_skeleton_rollback.sql
 ```
 
 ## 8. Staging Seed / Test Strategy
 
 Do not use real customer data.
+
+Fictional seed draft prepared:
+
+```text
+supabase/seed/procurement_phase3b1_fictional_seed.sql
+```
 
 Future staging seed should use fictional records to prove:
 
@@ -142,6 +174,12 @@ Future staging seed should use fictional records to prove:
 5. Active sales assignment grants read access only within the effective window.
 6. Customer-visible catalog rows are scoped by organization.
 7. Audit table is not readable by authenticated customer/sales users.
+
+RLS denial test draft prepared:
+
+```text
+scripts/procurement_phase3b1_rls_denial_tests.sql
+```
 
 ## 9. Next Phase Candidates
 
