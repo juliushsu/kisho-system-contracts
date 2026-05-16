@@ -8,6 +8,8 @@ Scope: CTO review checklist before migration / API implementation
 
 本輪禁止實際 migration、production code、API route implementation、Edge Function implementation、LINE integration、AI pricing automation、Readdy UI work、secrets / env access。
 
+Phase 3B-1 update: CTO accepted the Phase 3A must-fix direction and allowed preparation of a staging-only schema skeleton migration file. This approval does not authorize running the migration, production deployment, API route work, Readdy UI work, LINE integration, AI pricing automation, order confirmation, or inventory mutation.
+
 ## 1. CTO Review Requirement
 
 Phase 3B+ must not begin until CTO reviews and accepts this checklist.
@@ -50,7 +52,7 @@ Phase 3A CTO review additions:
 | Product categories | Confirm normalized `procurement_product_categories` |
 | Price book items | Confirm normalized `procurement_price_book_items` |
 | Price rule versioning | Confirm `version_no` and `supersedes_rule_id` semantics |
-| Customer merge/dedup | Confirm `dedupe_key`, `identity_status`, and `merged_into_customer_id` semantics |
+| Customer merge/dedup | Phase 3B-1 reserves `merge_candidate_of`, `identity_status`, `archived_at`, and `archived_reason`; future automated merge semantics still require CTO approval |
 | Sales assignment overlap | Confirm whether overlaps are forbidden or resolved by precedence |
 
 ## 3. Specific Hard Requirements
@@ -75,6 +77,36 @@ Phase 3B may start only if:
 5. Rollback/disable strategy is documented.
 6. Seed data is mock/safe.
 7. No production deployment is included.
+
+## 4.1 Phase 3B-1 Staging Schema Skeleton Gate
+
+Phase 3B-1 allowed scope:
+
+1. Create a staging migration draft file under `supabase/migrations/`.
+2. Define only the first schema skeleton tables needed for future Phase 2 UI reads and quote draft lifecycle.
+3. Enable RLS with conservative policies.
+4. Include audit schema foundation.
+5. Document rollback and staging seed strategy without real seed data.
+
+Phase 3B-1 required exclusions:
+
+1. Do not execute migration.
+2. Do not deploy to production.
+3. Do not add production API routes or Edge Functions.
+4. Do not connect LINE.
+5. Do not add AI pricing automation.
+6. Do not create formal orders, order confirmation APIs, inventory reservation, or inventory deduction.
+7. Do not create supplier cost, price book, customer price rule, or margin automation tables in this first skeleton.
+8. Do not use real customer seed data.
+
+Phase 3B-1 conservative RLS decision:
+
+1. Customer users may read only their own customer-scope records.
+2. Sales reps may read assigned customers only during effective assignment windows.
+3. Customer users may not read quote drafts.
+4. Authenticated users receive no insert/update/delete table grants.
+5. Audit table has no authenticated read policy in Phase 3B-1.
+6. Owner/admin broad access remains TODO until the canonical role source is confirmed.
 
 ## 5. Phase 3C Entry Criteria
 

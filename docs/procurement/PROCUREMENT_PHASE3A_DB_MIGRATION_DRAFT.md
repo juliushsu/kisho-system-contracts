@@ -8,6 +8,8 @@ Scope: Documentation / architecture / migration draft only
 
 本輪禁止實際 migration、production code、API route implementation、Edge Function implementation、LINE integration、AI pricing automation、Readdy UI work、secrets / env access。
 
+Phase 3B-1 update: CTO accepted the Phase 3A gate direction and allowed a staging-only schema skeleton file. The Phase 3B-1 file is a prepared migration draft only; it must not be executed without explicit approval.
+
 ## 1. Draft Principles
 
 1. All tables are proposed and require CTO review.
@@ -17,8 +19,9 @@ Scope: Documentation / architecture / migration draft only
 5. Transactional records use status transitions and audit events.
 6. Pricing and order confirmation require approval gates.
 7. AI events are trace records, not authority to finalize actions.
-8. Phase 3B must include an issued quote table between quote drafts and order drafts.
-9. Phase 3B must decide whether product categories and price book items are normalized tables; this draft now recommends normalizing both.
+8. Phase 3B full implementation should include an issued quote table between quote drafts and order drafts.
+9. Phase 3B full implementation should decide whether product categories and price book items are normalized tables; this draft recommends normalizing both.
+10. Phase 3B-1 intentionally limits the first staging skeleton to customer, catalog, quote request, quote draft, quote draft item, and audit foundation tables.
 
 ## 2. Table Drafts
 
@@ -26,7 +29,7 @@ Scope: Documentation / architecture / migration draft only
 
 Purpose: Canonical procurement customer account.
 
-Key columns: `id`, `organization_id`, `customer_code`, `display_name`, `segment`, `identity_status`, `dedupe_key`, `merged_into_customer_id`, `status`, `tags`, `archived_at`, `created_at`, `updated_at`.
+Key columns: `id`, `organization_id`, `customer_code`, `display_name`, `segment`, `identity_status`, `merge_candidate_of`, `status`, `tags`, `archived_at`, `archived_reason`, `created_at`, `updated_at`.
 
 Relationships: parent to locations, users, sales assignments, quote requests, drafts, orders, lists.
 
@@ -38,7 +41,7 @@ Audit expectation: create, update, archive, merge, identity repair.
 
 Future migration risk: duplicate identity and cross-domain customer mapping with Sake/Meat.
 
-Phase 3A review correction: `merged_into_customer_id` and `dedupe_key` are required before Phase 3B so customer merge/dedup does not become an unsafe ad hoc repair.
+Phase 3B-1 decision: do not automate merge/dedup and do not create a merge function. The staging skeleton only reserves `merge_candidate_of`, `archived_at`, and `archived_reason` so suspected duplicates can be reviewed without silently granting access to another customer.
 
 ### 2.2 `procurement_customer_locations`
 
@@ -119,6 +122,8 @@ RLS expectation: internal read; customer-visible categories only through approve
 Audit expectation: create/update/archive/reorder.
 
 Future migration risk: if Phase 3B uses enum-only categories, future category hierarchy and pricing rules will need a migration; normalized category table is recommended.
+
+Phase 3B-1 status: deferred. The skeleton keeps `procurement_products.category` as a constrained text field because normalized category governance is not needed for the first read/quote-draft foundation.
 
 ### 2.6 `procurement_product_variants`
 
@@ -202,6 +207,8 @@ Audit expectation: create/update/supersede/archive; price changes require before
 
 Future migration risk: money precision, category-level fallback precedence, version supersession rules.
 
+Phase 3B-1 status: excluded. Pricing tables and supplier cost fields are intentionally not created in the first staging skeleton.
+
 ### 2.10 `procurement_customer_price_rules`
 
 Purpose: Customer/category/product/variant-specific pricing rule.
@@ -219,6 +226,8 @@ Audit expectation: create/update/approve/archive; frontend direct writes forbidd
 Future migration risk: pricing semantics, minimum margin thresholds, approval state.
 
 Phase 3A review correction: customer price rules need explicit versioning and supersession before Phase 3B.
+
+Phase 3B-1 status: excluded. No customer price rule table, price book table, supplier quote table, or pricing automation is included.
 
 ### 2.11 `procurement_quote_requests`
 
@@ -428,3 +437,32 @@ Before turning this into a real migration:
 8. Confirm RLS helper functions.
 9. Confirm seed/mock strategy.
 10. Confirm rollback plan.
+
+## 4. Phase 3B-1 Staging Skeleton Mapping
+
+Prepared migration draft:
+
+```text
+supabase/migrations/20260516_procurement_phase3b1_schema_skeleton.sql
+```
+
+Phase 3B-1 creates only:
+
+1. `procurement_customers`
+2. `procurement_customer_locations`
+3. `procurement_customer_users`
+4. `procurement_sales_assignments`
+5. `procurement_products`
+6. `procurement_product_variants`
+7. `procurement_quote_requests`
+8. `procurement_quote_drafts`
+9. `procurement_quote_draft_items`
+10. `procurement_audit_events`
+
+Phase 3B-1 explicitly excludes:
+
+1. Production migration execution.
+2. `procurement_quotes`, `procurement_quote_items`, order drafts, orders, inventory mutation.
+3. Supplier cost, price books, customer price rules, margin automation.
+4. LINE integration, AI pricing automation, Edge Functions, production API routes.
+5. Real customer seed data.

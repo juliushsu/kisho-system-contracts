@@ -8,6 +8,8 @@ Scope: Documentation / architecture / migration draft only
 
 本文件不涉及 production code、不執行 DB migration、不碰 secrets / env、不接 LINE、不做 AI pricing automation、不建立真實訂單寫入、不改 Readdy UI、不建立 API route、不實作 Edge Function。
 
+Phase 3B-1 update: a staging-only schema skeleton file has been prepared, but not executed. Its RLS posture is intentionally conservative: enable RLS, avoid public broad access, grant only minimal authenticated SELECT policies for customer-own and assigned-sales reads, and defer owner/admin broad access until the canonical role source is confirmed.
+
 ## 1. Tenant Isolation Model
 
 Procurement data must be isolated by organization/tenant while supporting platform owner governance.
@@ -52,10 +54,12 @@ customer users 不可看其他 customer
 Customer identity merge / dedup requirements:
 
 1. Customer merge must be owner/admin only.
-2. A merged customer must retain `merged_into_customer_id` or equivalent canonical reference.
-3. Historical quote/order/audit records must not be reassigned silently.
-4. Customer users attached to a merged-away customer must not automatically gain access to the target customer until membership is explicitly reviewed.
-5. Every merge or dedup repair emits an audit event with previous and target customer IDs.
+2. Phase 3B-1 must not automate customer merge/dedup.
+3. Phase 3B-1 may reserve `merge_candidate_of`, `archived_at`, and `archived_reason` for manual review.
+4. A future merged customer must retain `merged_into_customer_id` or equivalent canonical reference only after CTO approves merge workflow semantics.
+5. Historical quote/order/audit records must not be reassigned silently.
+6. Customer users attached to a merged-away customer must not automatically gain access to the target customer until membership is explicitly reviewed.
+7. Every future merge or dedup repair emits an audit event with previous and target customer IDs.
 
 ## 4. Sales Rep Scoped Access
 
@@ -242,6 +246,23 @@ Candidate helper functions:
 | `can_ai_read_customer_context(agent_id, customer_id)` | AI-safe customer context access |
 
 Helper functions must be stable, audited where appropriate, and reviewed for security-definer risk.
+
+Phase 3B-1 helper posture:
+
+1. Customer-user and assigned-sales helper functions may be drafted because they are needed for narrow RLS policies.
+2. Owner/admin helper must remain TODO until the canonical role source is confirmed.
+3. Do not infer owner/admin access from unreviewed JWT metadata.
+4. Do not create broad organization-level policies before denial tests exist.
+
+Phase 3B-1 prepared helper candidates:
+
+| Function | Phase 3B-1 posture |
+| --- | --- |
+| `procurement_current_user_id()` | Drafted for Supabase `auth.uid()` access |
+| `procurement_is_customer_user_for_customer(user_id, customer_id)` | Drafted for customer-own reads |
+| `procurement_is_sales_rep_for_customer_at(user_id, customer_id, at_time)` | Drafted for effective-window sales reads |
+| `procurement_user_has_org_read_access(user_id, organization_id)` | Drafted for organization-scoped visible catalog reads |
+| `procurement_can_read_quote_draft(user_id, quote_draft_id)` | Drafted for assigned-sales quote draft item reads |
 
 ## 15. Testing Strategy
 
