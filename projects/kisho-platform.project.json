@@ -1,0 +1,64 @@
+{
+  "$schema": "./schema/project-metadata.schema.json",
+  "project_key": "kisho-platform",
+  "display_name": "Kisho Platform",
+  "product_line": "platform",
+  "lifecycle_status": "pilot",
+  "governance_status": "yellow",
+  "github_repo_url": null,
+  "default_branch": null,
+  "docs_path": "docs/platform",
+  "migration_path": null,
+  "frontend_path": null,
+  "backend_path": null,
+  "supabase_project_alias": null,
+  "railway_service_alias": null,
+  "environments": [
+    {
+      "name": "local",
+      "frontend_url": null,
+      "backend_url": null,
+      "supabase_alias": null,
+      "railway_alias": null,
+      "status": "unknown"
+    },
+    {
+      "name": "staging",
+      "frontend_url": null,
+      "backend_url": null,
+      "supabase_alias": null,
+      "railway_alias": null,
+      "status": "planned"
+    },
+    {
+      "name": "production",
+      "frontend_url": null,
+      "backend_url": null,
+      "supabase_alias": null,
+      "railway_alias": null,
+      "status": "planned"
+    }
+  ],
+  "owner": "platform_owner",
+  "maintainers": [
+    "platform_owner"
+  ],
+  "last_verified_at": "2026-05-12",
+  "notes": "Platform launcher and governance entrypoint metadata. Public-safe contract metadata only; no live infrastructure lookup.",
+  "prohibited_secret_fields": [
+    "api_key",
+    "token",
+    "password",
+    "service_role_key",
+    "anon_key_from_env",
+    "jwt",
+    "private_key",
+    "database_url",
+    "connection_string",
+    "webhook_secret",
+    "signed_url",
+    "env_value",
+    "railway_token",
+    "cloud_provider_credential"
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/juliushsu/kisho-system-contracts/projects/schema/project-metadata.schema.json",
+  "title": "Kisho Project Metadata",
+  "description": "Public-safe project metadata registry entry. This schema forbids storing secrets and supports contracts-driven Project Governance metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_key",
+    "display_name",
+    "product_line",
+    "lifecycle_status",
+    "governance_status",
+    "github_repo_url",
+    "default_branch",
+    "docs_path",
+    "migration_path",
+    "frontend_path",
+    "backend_path",
+    "supabase_project_alias",
+    "railway_service_alias",
+    "environments",
+    "owner",
+    "maintainers",
+    "last_verified_at",
+    "notes",
+    "prohibited_secret_fields"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional local schema hint for editors and validators."
+    },
+    "project_key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-_.]*$",
+      "description": "Stable project key. Prefer lowercase kebab-case. The file name should be <project_key>.project.json."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable project name."
+    },
+    "product_line": {
+      "type": "string",
+      "enum": ["platform", "sake", "meat", "agent", "contracts", "lensbank", "other"],
+      "description": "Primary product line or governance category."
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": ["planning", "pilot", "staging", "production", "archived"],
+      "description": "Project lifecycle status. This is governance metadata, not a deployment guarantee."
+    },
+    "governance_status": {
+      "type": "string",
+      "enum": ["green", "yellow", "red", "unknown"],
+      "description": "Governance health label for dashboard display."
+    },
+    "github_repo_url": {
+      "$ref": "#/$defs/nullableUrl",
+      "description": "GitHub repository URL only. Must not include token, password, or embedded credentials."
+    },
+    "default_branch": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Default branch if known."
+    },
+    "docs_path": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Repo-relative or registry-relative documentation path."
+    },
+    "migration_path": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Repo-relative migration path if applicable. This field does not authorize migrations."
+    },
+    "frontend_path": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Repo-relative frontend path if applicable."
+    },
+    "backend_path": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Repo-relative backend path if applicable."
+    },
+    "supabase_project_alias": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Human-readable alias only. Never store Supabase keys, JWTs, passwords, project secrets, or connection strings."
+    },
+    "railway_service_alias": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Human-readable alias only. Never store Railway tokens, deploy hooks, or secret environment values."
+    },
+    "environments": {
+      "type": "array",
+      "description": "Public-safe environment metadata. Alias fields are display labels only.",
+      "items": {
+        "$ref": "#/$defs/environment"
+      },
+      "uniqueItems": true
+    },
+    "owner": {
+      "$ref": "#/$defs/nullableString",
+      "description": "Owning person, role, or team. Use a role label if personal ownership is not public-safe."
+    },
+    "maintainers": {
+      "type": "array",
+      "description": "Public-safe maintainer names, handles, or role labels.",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "last_verified_at": {
+      "$ref": "#/$defs/nullableIsoDate",
+      "description": "ISO 8601 date or timestamp when the metadata was last reviewed."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Non-secret human notes. Do not include credentials, copied env values, or private operational details."
+    },
+    "prohibited_secret_fields": {
+      "type": "array",
+      "description": "Explicit reminder of field names and value types that must never be stored in this registry.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "api_key",
+          "token",
+          "password",
+          "service_role_key",
+          "anon_key_from_env",
+          "jwt",
+          "private_key",
+          "database_url",
+          "connection_string",
+          "webhook_secret",
+          "signed_url",
+          "env_value",
+          "railway_token",
+          "cloud_provider_credential"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "nullableString": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "nullableUrl": {
+      "anyOf": [
+        { "type": "string", "format": "uri" },
+        { "type": "string", "const": "" },
+        { "type": "null" }
+      ]
+    },
+    "nullableIsoDate": {
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "string", "format": "date" },
+        { "type": "string", "const": "" },
+        { "type": "null" }
+      ]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "frontend_url",
+        "backend_url",
+        "supabase_alias",
+        "railway_alias",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["demo", "staging", "production", "local"]
+        },
+        "frontend_url": {
+          "$ref": "#/$defs/nullableUrl",
+          "description": "Public or internal non-secret URL only. Do not store signed URLs or embedded credentials."
+        },
+        "backend_url": {
+          "$ref": "#/$defs/nullableUrl",
+          "description": "Public or internal non-secret URL only. Do not store signed URLs or embedded credentials."
+        },
+        "supabase_alias": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Alias only. Never store keys, JWTs, passwords, or connection strings."
+        },
+        "railway_alias": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Alias only. Never store tokens, deploy hooks, or secret environment values."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "available", "degraded", "disabled", "unknown"]
+        }
+      }
+    }
+  }
+}
