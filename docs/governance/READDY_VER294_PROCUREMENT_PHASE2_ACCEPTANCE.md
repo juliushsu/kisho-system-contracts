@@ -13,7 +13,7 @@ Scope: Read-only acceptance / governance backfill
 Source artifact inspected:
 
 ```text
-/Users/chishenhsu/Downloads/皇上吉祥-Ver294
+[local Readdy artifact: 皇上吉祥-Ver294]
 ```
 
 Safety handling:

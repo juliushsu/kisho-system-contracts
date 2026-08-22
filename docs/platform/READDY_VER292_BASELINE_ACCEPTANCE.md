@@ -6,7 +6,7 @@ Scope: Platform multi-vertical shell baseline acceptance for Readdy VER292
 
 Reviewed package:
 
-- `/Users/chishenhsu/Downloads/皇上吉祥-Ver292`
+- `[local Readdy artifact: 皇上吉祥-Ver292]`
 
 This document records acceptance of VER292 as a frontend shell baseline only. It does not authorize database changes, migrations, API changes, production data edits, or secret handling.
 

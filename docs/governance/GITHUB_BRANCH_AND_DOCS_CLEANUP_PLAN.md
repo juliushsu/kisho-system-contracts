@@ -18,7 +18,7 @@ Scope: Documentation / governance only
 | `kisho-system-contracts` | 獨立 Git repo，remote 為 `https://github.com/juliushsu/kisho-system-contracts.git` | 本輪治理文件應提交於此 |
 | `kisho_gateway` | 本輪未發現獨立 `.git`，含實作與 Supabase 文件 | 不在本輪修改範圍 |
 | `stm32g474_firmware` | 本輪未發現獨立 `.git` | 不在本輪修改範圍 |
-| `/Users/chishenhsu/Downloads/皇上吉祥-Ver293` | Readdy Ver293 artifact，非本輪 Git repo | 只讀盤點 route/navigation；內含 `.env` 但本輪未讀取 |
+| `[local Readdy artifact: 皇上吉祥-Ver293]` | Readdy Ver293 artifact，非本輪 Git repo | 只讀盤點 route/navigation；內含 `.env` 但本輪未讀取 |
 
 ## 2. Branch 盤點
 

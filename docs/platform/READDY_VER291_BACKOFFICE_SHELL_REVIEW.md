@@ -6,7 +6,7 @@ Scope: Readdy VER291 downloaded package code review and runtime smoke guidance
 
 Reviewed package:
 
-- `/Users/chishenhsu/Downloads/皇上吉祥-Ver291`
+- `[local Readdy artifact: 皇上吉祥-Ver291]`
 
 This review is code and architecture audit only. It does not authorize database changes, migrations, secret handling, or production UI rollout.
 

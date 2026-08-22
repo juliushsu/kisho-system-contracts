@@ -13,7 +13,7 @@ Scope: Documentation / governance only
 本輪只讀盤點來源：
 
 ```text
-/Users/chishenhsu/Downloads/皇上吉祥-Ver293
+[local Readdy artifact: 皇上吉祥-Ver293]
 ```
 
 安全限制：
