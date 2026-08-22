@@ -1,0 +1,64 @@
+{
+  "fixture": true,
+  "classification": "PUBLIC_DEIDENTIFIED_UI_EXAMPLE",
+  "generated_for": "Readdy UI rendering only",
+  "organization": {
+    "id": "ORG-DEMO-001",
+    "display_name": "示範商戶",
+    "status": "ACTIVE"
+  },
+  "stores": [
+    {
+      "id": "STORE-DEMO-001",
+      "organization_id": "ORG-DEMO-001",
+      "display_name": "台北示範店",
+      "branding_status": "PUBLISHED",
+      "topology_status": "FRESH",
+      "machines": [
+        {
+          "id": "MACHINE-DEMO-01",
+          "display_name": "右側酒機",
+          "position_code": "E",
+          "status": "ONLINE",
+          "freshness": "FRESH",
+          "assignment": {
+            "merchant_product_id": "MP-DEMO-001",
+            "display_name": "示範純米吟釀",
+            "availability": "AVAILABLE"
+          }
+        },
+        {
+          "id": "MACHINE-DEMO-02",
+          "display_name": "左側酒機",
+          "position_code": "W",
+          "status": "UNKNOWN",
+          "freshness": "STALE",
+          "assignment": null
+        }
+      ]
+    }
+  ],
+  "catalog_example": {
+    "canonical_variant_id": "VARIANT-DEMO-001",
+    "product_name": "示範純米吟釀",
+    "volume_ml": 720,
+    "supplier_listing": {
+      "id": "LISTING-DEMO-001",
+      "supplier_display_name": "示範供應商",
+      "availability": "OBSERVED_AVAILABLE",
+      "freshness": "STALE",
+      "minimum_order_quantity": 6
+    },
+    "merchant_product": {
+      "id": "MP-DEMO-001",
+      "store_id": "STORE-DEMO-001",
+      "publication_status": "PUBLISHED"
+    }
+  },
+  "miss_sake_read_plane": {
+    "mode": "STAGING_DEMO",
+    "freshness": "FRESH",
+    "write_capability": false,
+    "machine_control_capability": false
+  }
+}
